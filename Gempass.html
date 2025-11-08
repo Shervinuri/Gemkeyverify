@@ -1,1 +1,570 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHEN API Key Verifier</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d0d0d;
+            color: #e0e0e0;
+        }
+
+        /* Title Style */
+        .shen-title {
+            font-weight: 900;
+            font-size: 4.5rem; /* 72px */
+            letter-spacing: 0.1em;
+            background-image: linear-gradient(
+                90deg, 
+                #333, 
+                #f0f0f0, 
+                #888, 
+                #f0f0f0, 
+                #333
+            );
+            background-size: 200% auto; /* For animation */
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: gradient-text-flow 8s linear infinite;
+        }
+        
+        /* New Subtitle Style */
+        .subtitle {
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            font-size: 1rem; /* 16px */
+            color: #aaa;
+            margin-top: -5px;
+        }
+
+        /* Greyscale Border Animation */
+        @keyframes greyscale-border-flow {
+            0%   { border-color: #f0f0f0; box-shadow: 0 0 6px #f0f0f0; }
+            25%  { border-color: #a0a0a0; box-shadow: 0 0 6px #a0a0a0; }
+            50%  { border-color: #f0f0f0; box-shadow: 0 0 6px #f0f0f0; }
+            75%  { border-color: #666666; box-shadow: 0 0 6px #666666; }
+            100% { border-color: #f0f0f0; box-shadow: 0 0 6px #f0f0f0; }
+        }
+
+        /* Glassmorphism + Greyscale Card Style */
+        .glass-neon-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid;
+            border-radius: 16px;
+            animation: greyscale-border-flow 6s linear infinite;
+        }
+
+        /* Greyscale Outline Button (for Start/Stop/Reset) */
+        .neon-outline-button {
+            background: transparent;
+            border: 2px solid;
+            border-radius: 12px;
+            animation: greyscale-border-flow 6s linear infinite;
+            transition: all 0.3s ease;
+            color: #e0e0e0;
+        }
+        .neon-outline-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.03);
+        }
+        .neon-outline-button:disabled {
+            opacity: 0.5; cursor: not-allowed; animation: none; border-color: #444; box-shadow: none;
+        }
+
+        /* Glassmorphism Action Button (for Copy/Download/Upload) */
+        .glass-action-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .glass-action-button:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* Custom Input Styling */
+        .glass-input, .glass-textarea {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #e0e0e0;
+            padding: 12px;
+            width: 100%;
+        }
+        .glass-input:focus, .glass-textarea:focus {
+            outline: none; border-color: #aaa; box-shadow: 0 0 10px rgba(170, 170, 170, 0.5);
+        }
+
+        /* Custom Loader */
+        .loader {
+            width: 48px; height: 48px; border: 4px solid #4a4a4a;
+            border-top-color: #cccccc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Custom Scrollbar */
+        .results-list::-webkit-scrollbar { width: 8px; }
+        .results-list::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        .results-list::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen w-full flex items-center justify-center p-6">
+
+    <div class="w-full max-w-4xl space-y-8">
+        
+        <!-- Header (Updated) -->
+        <header class="text-center flex flex-col items-center">
+            <h1 class="shen-title">SHΞN™</h1>
+            <h2 class="subtitle">API KEY VERIFICATION</h2>
+        </header>
+
+        <!-- Input Card -->
+        <main class="glass-neon-card p-8 space-y-4">
+            <textarea id="pasteInput" rows="6" class="glass-textarea" placeholder="Paste keys here (Highest Priority)"></textarea>
+            <input type="text" id="urlInput" class="glass-input" placeholder="Or enter raw file URL (e.g., from GitHub)">
+            
+            <!-- File Upload Button -->
+            <div class="text-center">
+                <input type="file" id="fileInput" class="hidden" accept=".txt,.json,.md">
+                <label for="fileInput" id="fileInputLabel" class="glass-action-button py-3 px-6 inline-block cursor-pointer hover:transform hover:scale-105">
+                    Click to Upload File
+                </label>
+            </div>
+            
+            <!-- Action Buttons Row -->
+            <div class="grid grid-cols-2 gap-4 pt-4">
+                <button id="startStopButton" class="w-full py-4 text-lg font-bold neon-outline-button">
+                    Start Checking
+                </button>
+                <button id="resetButton" class="w-full py-4 text-lg font-bold neon-outline-button" style="animation-delay: -3s;">
+                    Reset
+                </button>
+            </div>
+        </main>
+        
+        <!-- Status & Results Card -->
+        <section id="resultsSection" class="glass-neon-card p-8 space-y-6">
+            
+            <!-- Loading State (Toggled) -->
+            <div id="loadingIndicator" class="text-center space-y-4 hidden">
+                <div class="loader mx-auto"></div>
+                <p id="statusText" class="text-lg text-gray-300">Initializing...</p>
+                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                    <div id="progressBar" class="bg-gray-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <!-- Summary Stats -->
+            <div id="summaryStats" class="flex flex-col sm:flex-row justify-between sm:items-center bg-black bg-opacity-30 p-4 rounded-lg space-y-2 sm:space-y-0">
+                <h2 class="text-2xl font-bold text-gray-300">Results</h2>
+                <div class="flex flex-wrap gap-x-4 gap-y-2">
+                    <span class="text-lg font-medium">Valid: <span id="validCount" class="text-green-400">0</span></span>
+                    <span class="text-lg font-medium">Invalid: <span id="invalidCount" class="text-red-400">0</span></span>
+                    <span class="text-lg font-medium">Total: <span id="totalCount" class="text-gray-300">0</span></span>
+                </div>
+            </div>
+
+            <!-- Results Lists (Grid) - Swapped Order -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Invalid Keys List (Left) -->
+                <div>
+                    <h3 class="text-xl font-bold text-red-400 mb-4">❌ Invalid Keys</h3>
+                    <div id="invalidKeysList" class="results-list h-64 overflow-y-auto space-y-3 p-4 bg-black bg-opacity-30 rounded-lg border border-gray-700">
+                        <p class="placeholder text-gray-500 text-center mt-20">Invalid keys will appear here...</p>
+                    </div>
+                </div>
+
+                <!-- Valid Keys List (Right) -->
+                <div>
+                    <h3 class="text-xl font-bold text-green-400 mb-4">✅ Valid Keys</h3>
+                    <div id="validKeysList" class="results-list h-64 overflow-y-auto space-y-3 p-4 bg-black bg-opacity-30 rounded-lg border border-gray-700">
+                        <p class="placeholder text-gray-500 text-center mt-20">Valid keys will appear here...</p>
+                    </div>
+                    
+                    <!-- Action Buttons (New Location) -->
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <button id="copyAllButton" class="glass-action-button py-3 text-base font-medium text-white">Copy All Valid</button>
+                        <button id="downloadButton" class="glass-action-button py-3 text-base font-medium text-white">Download Valid (.txt)</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Footer (Updated) -->
+        <footer class="text-center">
+            <p class="text-sm text-gray-600">Exclusive SHΞN™ made</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const startStopButton = document.getElementById('startStopButton');
+        const resetButton = document.getElementById('resetButton');
+        
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const statusText = document.getElementById('statusText');
+        const progressBar = document.getElementById('progressBar');
+        const summaryStats = document.getElementById('summaryStats');
+        
+        const validKeysList = document.getElementById('validKeysList');
+        const invalidKeysList = document.getElementById('invalidKeysList');
+        
+        const validCountEl = document.getElementById('validCount');
+        const invalidCountEl = document.getElementById('invalidCount');
+        const totalCountEl = document.getElementById('totalCount');
+        
+        const copyAllButton = document.getElementById('copyAllButton');
+        const downloadButton = document.getElementById('downloadButton');
+        
+        const pasteInput = document.getElementById('pasteInput');
+        const urlInput = document.getElementById('urlInput');
+        const fileInput = document.getElementById('fileInput');
+        const fileInputLabel = document.getElementById('fileInputLabel');
+
+        // --- State Variables ---
+        let validKeysArray = [];
+        let totalKeys = 0;
+        let validCount = 0;
+        let invalidCount = 0;
+        let processedCount = 0;
+        let isChecking = false; // For Stop button logic
+
+        // --- Event Listeners ---
+        startStopButton.addEventListener('click', startStopHandler);
+        resetButton.addEventListener('click', resetApp);
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileInputLabel.textContent = `File: ${fileInput.files[0].name}`;
+                fileInputLabel.style.color = "#4285F4"; // Use a neutral bright color
+            }
+        });
+
+        // --- Core Functions ---
+
+        /**
+         * Handles Start/Stop button clicks.
+         */
+        async function startStopHandler() {
+            if (isChecking) {
+                // --- Stop Action ---
+                isChecking = false;
+                startStopButton.textContent = 'Stopping...';
+                startStopButton.disabled = true;
+            } else {
+                // --- Start Action ---
+                isChecking = true;
+                startStopButton.textContent = 'Stop Checking';
+                await runChecks();
+            }
+        }
+
+        /**
+         * Resets the entire application UI to its initial state.
+         */
+        function resetApp() {
+            isChecking = false; // Stop any ongoing checks
+            
+            // Reset buttons
+            startStopButton.textContent = 'Start Checking';
+            startStopButton.disabled = false;
+            
+            // Reset inputs
+            pasteInput.value = '';
+            urlInput.value = '';
+            fileInput.value = null; // Clear file
+            fileInputLabel.textContent = 'Click to Upload File';
+            fileInputLabel.style.color = "";
+            
+            // Hide loader
+            loadingIndicator.style.display = 'none';
+            
+            // Reset stats
+            totalKeys = 0;
+            validCount = 0;
+            invalidCount = 0;
+            processedCount = 0;
+            validKeysArray = [];
+            
+            totalCountEl.textContent = '0';
+            validCountEl.textContent = '0';
+            invalidCountEl.textContent = '0';
+
+            // Reset lists
+            validKeysList.innerHTML = '<p class="placeholder text-gray-500 text-center mt-20">Valid keys will appear here...</p>';
+            invalidKeysList.innerHTML = '<p class="placeholder text-gray-500 text-center mt-20">Invalid keys will appear here...</p>';
+        }
+
+
+        /**
+         * Main logic for running the key checks.
+         */
+        async function runChecks() {
+            startStopButton.disabled = true; // Disable while starting up
+            setupUIForTesting();
+            startStopButton.disabled = false; // Re-enable as "Stop" button
+            
+            try {
+                const rawText = await getRawTextFromInput();
+                
+                if (rawText === null || rawText.trim() === "") {
+                    statusText.innerHTML = '<span class="text-red-500">No input provided. Please paste, enter URL, or upload a file.</span>';
+                    throw new Error("No input"); // Go to finally block
+                }
+                
+                const keyRegex = /(AIza[a-zA-Z0-9_-]{35})/g;
+                const matches = rawText.match(keyRegex) || [];
+                const keys = [...new Set(matches)]; // Remove duplicates
+                
+                if (keys.length === 0) {
+                    statusText.innerHTML = '<span class="text-red-500">No valid API key formats found.</span>';
+                    throw new Error("No keys found"); // Go to finally block
+                }
+
+                await processKeys(keys);
+
+            } catch (error) {
+                console.error("Error during processing:", error.message);
+                if (error.message === "No input" || error.message === "No keys found") {
+                     // Status already set
+                } else {
+                    statusText.innerHTML = `<span class="text-red-500">An unexpected error occurred.</span>`;
+                }
+            } finally {
+                // This block runs whether the check finished, was stopped, or errored
+                isChecking = false;
+                startStopButton.textContent = 'Start Checking';
+                startStopButton.disabled = false;
+                
+                // *** LOGIC FIX: Hide loader when done/stopped ***
+                loadingIndicator.style.display = 'none';
+                
+                // Update status text only if it wasn't already an error/stop message
+                if (statusText.textContent.includes('Checking')) {
+                    statusText.textContent = 'Check complete!';
+                }
+            }
+        }
+
+        /**
+         * Gets the raw text from one of the three input methods.
+         */
+        async function getRawTextFromInput() {
+            const pasteValue = pasteInput.value.trim();
+            if (pasteValue) {
+                statusText.textContent = 'Processing pasted text...';
+                return pasteValue;
+            }
+            
+            const urlValue = urlInput.value.trim();
+            if (urlValue) {
+                statusText.textContent = 'Fetching from URL...';
+                try {
+                    // Simple proxy to bypass CORS if needed (can be removed if source allows)
+                    // const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; 
+                    // const response = await fetch(proxyUrl + urlValue);
+                    const response = await fetch(urlValue);
+                    if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`);
+                    return await response.text();
+                } catch (error) {
+                    console.error("URL Fetch Error:", error);
+                    statusText.innerHTML = `<span class="text-red-500">Failed to fetch from URL. (Check CORS)</span>`;
+                    return null;
+                }
+            }
+            
+            const file = fileInput.files[0];
+            if (file) {
+                statusText.textContent = `Processing file: ${file.name}...`;
+                return await file.text();
+            }
+
+            return null; // No input found
+        }
+        
+        /**
+         * Loops through keys, validates them, and updates UI.
+         */
+        async function processKeys(keys) {
+            totalKeys = keys.length;
+            totalCountEl.textContent = totalKeys;
+
+            for (const key of keys) {
+                // --- Stop Logic Check ---
+                if (!isChecking) {
+                    statusText.textContent = 'Check stopped by user.';
+                    break; // Exit the loop
+                }
+                
+                processedCount++;
+                const isValid = await validateKey(key);
+                
+                // Check again in case user stopped *during* validateKey
+                if (!isChecking) {
+                    statusText.textContent = 'Check stopped by user.';
+                    break;
+                }
+                
+                if (isValid) {
+                    validCount++;
+                    validCountEl.textContent = validCount;
+                    validKeysArray.push(key);
+                    addKeyToList(validKeysList, key, true);
+                } else {
+                    invalidCount++;
+                    invalidCountEl.textContent = invalidCount;
+                    addKeyToList(invalidKeysList, key, false);
+                }
+                
+                updateStatus();
+                
+                // Rate limit delay from v1
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        }
+
+        /**
+         * Validates a single API key against the Gemini API.
+         */
+        async function validateKey(apiKey) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: "Hello" }] }] };
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    return data && data.candidates && data.candidates.length > 0;
+                }
+                return false;
+            } catch (error) {
+                return false;
+            }
+        }
+        
+        /**
+         * Adds a key item to the correct list in the UI.
+         */
+        function addKeyToList(listElement, key, isHealthy) {
+            const maskedKey = key.substring(0, 8) + '...' + key.substring(key.length - 4);
+            
+            const item = document.createElement('div');
+            item.className = `flex justify-between items-center p-3 bg-black bg-opacity-40 rounded-lg`;
+            
+            let innerHTML = `<span class="font-mono text-sm ${isHealthy ? 'text-green-300' : 'text-red-300'} min-w-0 truncate" title="${key}">${maskedKey}</span>`;
+            
+            if (isHealthy) {
+                innerHTML += `<button class="copy-one-btn text-xs bg-gray-600 text-white px-3 py-1 rounded-md hover:bg-gray-500 transition-all flex-shrink-0" data-key="${key}">Copy</button>`;
+            }
+
+            item.innerHTML = innerHTML;
+            
+            const placeholder = listElement.querySelector('.placeholder');
+            if (placeholder) placeholder.remove();
+            
+            listElement.appendChild(item);
+        }
+
+        /**
+         * Updates the progress bar and status text.
+         */
+        function updateStatus() {
+            const percentage = (processedCount / totalKeys) * 100;
+            progressBar.style.width = `${percentage}%`;
+            statusText.textContent = `Checking key ${processedCount} of ${totalKeys}...`;
+        }
+
+        /**
+         * Resets UI elements for a new test run.
+         */
+        function setupUIForTesting() {
+            totalKeys = 0;
+            validCount = 0;
+            invalidCount = 0;
+            processedCount = 0;
+            validKeysArray = [];
+
+            loadingIndicator.style.display = 'block';
+            summaryStats.style.display = 'flex';
+
+            totalCountEl.textContent = '0';
+            validCountEl.textContent = '0';
+            invalidCountEl.textContent = '0';
+            statusText.textContent = 'Initializing...';
+            progressBar.style.width = '0%';
+            
+            validKeysList.innerHTML = '<p class="placeholder text-gray-500 text-center mt-20">Valid keys will appear here...</p>';
+            invalidKeysList.innerHTML = '<p class="placeholder text-gray-500 text-center mt-20">Invalid keys will appear here...</p>';
+        }
+
+        /**
+         * Copies text to clipboard and shows feedback on the button.
+         */
+        function copyToClipboard(text, buttonElement) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            document.body.appendChild(textarea);
+            
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                if (buttonElement) {
+                    const originalText = buttonElement.textContent;
+                    buttonElement.textContent = 'Copied!';
+                    buttonElement.classList.add('bg-green-600', 'hover:bg-green-700');
+                    setTimeout(() => {
+                        buttonElement.textContent = originalText;
+                        buttonElement.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    }, 2000);
+                }
+            } catch (err) { console.error('Failed to copy: ', err); }
+            document.body.removeChild(textarea);
+        }
+
+        // --- Event Listeners for Output ---
+        validKeysList.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('copy-one-btn')) {
+                copyToClipboard(e.target.dataset.key, e.target);
+            }
+        });
+
+        copyAllButton.addEventListener('click', () => {
+            if (validKeysArray.length > 0) {
+                copyToClipboard(validKeysArray.join('\n'), copyAllButton);
+            }
+        });
+
+        downloadButton.addEventListener('click', () => {
+            if (validKeysArray.length > 0) {
+                const blob = new Blob([validKeysArray.join('\n')], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'valid_gemini_keys.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        });
+
+    </script>
+</body>
+</html>
